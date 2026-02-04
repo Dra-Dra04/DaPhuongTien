@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HP Media Server - Auto Gallery</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; text-align: center; margin: 0; padding: 20px; }
+        h1 { color: #0096D6; margin-bottom: 5px; }
+        p.subtitle { color: #666; font-style: italic; margin-bottom: 30px; }
+
+        /* Loading Animation */
+        #loading { font-size: 1.2em; color: #0096D6; margin-top: 50px; }
+
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .media-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 250px;
+            transition: transform 0.2s;
+        }
+        .media-item:hover { transform: translateY(-5px); }
+        .media-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover; /* Cắt ảnh cho vừa khung đẹp hơn */
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .file-name {
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #333;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>HP Media Server</h1>
+    <p class="subtitle">Dữ liệu được đồng bộ tự động từ GitHub API</p>
+
+    <div id="loading">Đang kết nối tới GitHub Storage...</div>
+    <div class="gallery" id="gallery-container">
+        </div>
+
+    <script>
+        // Cấu hình thông tin Repo
+        const owner = 'Dra-Dra04';
+        const repo = 'DaPhuongTien';
+        // API Endpoint để lấy danh sách file trong thư mục gốc
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/`;
+
+        // Hàm lấy dữ liệu
+        async function fetchImages() {
+            try {
+                const response = await fetch(apiUrl);
+
+                // Kiểm tra lỗi (ví dụ: hết lượt request)
+                if (!response.ok) throw new Error('Không thể kết nối tới GitHub API');
+
+                const data = await response.json();
+                const gallery = document.getElementById('gallery-container');
+                const loading = document.getElementById('loading');
+
+                // Lọc chỉ lấy file ảnh (jpg, png, jpeg, gif)
+                const images = data.filter(file =>
+                    file.name.match(/\.(jpg|jpeg|png|gif)$/i)
+                );
+
+                // Ẩn thông báo loading
+                loading.style.display = 'none';
+
+                if (images.length === 0) {
+                    gallery.innerHTML = '<p>Không tìm thấy ảnh nào trong repository.</p>';
+                    return;
+                }
+
+                // Vòng lặp tạo phần tử HTML cho từng ảnh
+                images.forEach(file => {
+                    // Tạo thẻ div bao ngoài
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'media-item';
+
+                    // Tạo thẻ img
+                    const img = document.createElement('img');
+                    // file.download_url chính là đường dẫn RAW mà bạn cần
+                    img.src = file.download_url;
+                    img.alt = file.name;
+                    img.onclick = () => window.open(file.download_url, '_blank'); // Click để xem ảnh gốc
+
+                    // Tạo tên file
+                    const nameP = document.createElement('p');
+                    nameP.className = 'file-name';
+                    nameP.textContent = file.name;
+
+                    // Gắn vào div cha, rồi gắn vào gallery
+                    itemDiv.appendChild(img);
+                    itemDiv.appendChild(nameP);
+                    gallery.appendChild(itemDiv);
+                });
+
+            } catch (error) {
+                console.error('Lỗi:', error);
+                document.getElementById('loading').textContent = 'Lỗi: ' + error.message;
+            }
+        }
+
+        // Chạy hàm khi tải trang
+        fetchImages();
+    </script>
+
+</body>
+</html>
